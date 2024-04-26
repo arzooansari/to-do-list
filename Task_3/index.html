@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>To-Do List</title>
+<style>
+  #taskInput {
+    width: 70%;
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+  #addTaskBtn {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  #taskList {
+    list-style-type: none;
+    padding: 0;
+  }
+  .taskItem {
+    margin-bottom: 5px;
+  }
+  .deleteBtn {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    margin-left: 10px;
+  }
+  .taskItem.completed {
+    text-decoration: line-through;
+  }
+  #historyView {
+    margin-top: 20px;
+    display: none;
+  }
+  #showHistoryBtn {
+    padding: 10px 20px;
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<h2>To-Do List</h2>
+<input type="text" id="taskInput" placeholder="Enter task">
+<button id="addTaskBtn">Add Task</button>
+
+<ul id="taskList"></ul>
+
+<button id="showHistoryBtn">Show History</button>
+<div id="historyView">
+  <h2>History</h2>
+  <ul id="historyList"></ul>
+  <button id="clearHistoryBtn">Clear History</button>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const taskInput = document.getElementById("taskInput");
+    const addTaskBtn = document.getElementById("addTaskBtn");
+    const taskList = document.getElementById("taskList");
+    const showHistoryBtn = document.getElementById("showHistoryBtn");
+    const historyView = document.getElementById("historyView");
+    const historyList = document.getElementById("historyList");
+    const clearHistoryBtn = document.getElementById("clearHistoryBtn");
+
+    // Load tasks from storage
+    const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    tasks.forEach(task => addTaskToDOM(task.text, task.completed));
+
+    addTaskBtn.addEventListener("click", function() {
+      const taskText = taskInput.value.trim();
+      if (taskText !== "") {
+        addTaskToDOM(taskText);
+        addToHistory(taskText); // Add to history when adding a new task
+        saveTasksToStorage();
+        taskInput.value = "";
+      }
+    });
+
+    showHistoryBtn.addEventListener("click", function() {
+      historyView.style.display = "block";
+      refreshHistoryView();
+    });
+
+    function addTaskToDOM(taskText, completed = false) {
+      const taskItem = document.createElement("li");
+      taskItem.className = "taskItem";
+      
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = completed;
+      checkbox.addEventListener("change", function() {
+        if (checkbox.checked) {
+          taskItem.classList.add("completed");
+        } else {
+          taskItem.classList.remove("completed");
+        }
+        saveTasksToStorage();
+      });
+
+      const taskTextSpan = document.createElement("span");
+      taskTextSpan.textContent = taskText;
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "deleteBtn";
+      deleteBtn.textContent = "Delete";
+      deleteBtn.addEventListener("click", function() {
+        taskItem.remove();
+        saveTasksToStorage();
+      });
+
+      taskItem.appendChild(checkbox);
+      taskItem.appendChild(taskTextSpan);
+      taskItem.appendChild(deleteBtn);
+      taskList.appendChild(taskItem);
+    }
+
+    function saveTasksToStorage() {
+      const tasks = [];
+      document.querySelectorAll(".taskItem").forEach(taskItem => {
+        tasks.push({
+          text: taskItem.querySelector("span").textContent,
+          completed: taskItem.querySelector("input[type=checkbox]").checked
+        });
+      });
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+    }
+
+    function addToHistory(taskText) {
+      const history = JSON.parse(localStorage.getItem("history")) || [];
+      history.push(taskText);
+      while (history.length > 5) {
+        history.shift();
+      }
+      localStorage.setItem("history", JSON.stringify(history));
+    }
+
+    function refreshHistoryView() {
+      historyList.innerHTML = "";
+      const history = JSON.parse(localStorage.getItem("history")) || [];
+      history.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        historyList.appendChild(li);
+      });
+    }
+
+    clearHistoryBtn.addEventListener("click", function() {
+      localStorage.removeItem("history");
+      historyView.style.display = "none";
+    });
+
+    // Example of clearing history on page load (for demonstration purposes)
+    // clearHistory();
+  });
+</script>
+
+</body>
+</html>
